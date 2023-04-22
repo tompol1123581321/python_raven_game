@@ -59,3 +59,4 @@ class Time_Manager:
         self.time_elapsed_since_last_arrow_fired = 0
         self.time_elapsed_since_incresed_score = 0
         self.clock = pygame.time.Clock()
+        self.arrow_speed = 4000

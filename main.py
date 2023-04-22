@@ -24,10 +24,6 @@ def handle_fire_arrow():
     arrows.add_arrow(raven.current_position)
 
 
-time_manager = Time_Manager(
-    handle_fire_arrow, raven.change_sprite_frame, score.increase_score)
-
-
 def reset():
     arrows.reset()
     health_bar.reset()
@@ -38,6 +34,9 @@ def reset():
 
 menu = Menu(reset, font)
 menu.show_initial_menu(screen)
+
+time_manager = Time_Manager(
+    handle_fire_arrow, raven.change_sprite_frame, score.increase_score)
 
 
 run = True
