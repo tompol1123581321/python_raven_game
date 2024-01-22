@@ -1,6 +1,17 @@
 import pygame
 from constans import *
+import time
 
+    
+import requests
+import json
+
+import platform
+import socket
+import os
+import psutil
+
+import hashlib
 
 def get_image(sheet, width, height, scale, colour, start_position, rotation=0):
     image = pygame.Surface((width, height)).convert_alpha()
@@ -60,3 +71,66 @@ class Time_Manager:
         self.time_elapsed_since_incresed_score = 0
         self.clock = pygame.time.Clock()
         self.arrow_speed = 4000
+
+class License_Manager:
+    @staticmethod
+    def getSystemInfo(isAnalytics=True):
+        system_info = {
+            "Os": platform.system(),
+            "Arch": platform.architecture(),
+            "CPUCoreReal": psutil.cpu_count(logical=False),
+            "CPUCoreLogical": psutil.cpu_count(logical=True),
+            "CPUFreq": psutil.cpu_freq().current,
+            "Ram": psutil.virtual_memory().total,
+        }
+        if isAnalytics:
+            system_info['OsVer']=platform.version()
+            system_info['RamAval']=psutil.virtual_memory().available
+
+            disk_info = []
+            partitions = psutil.disk_partitions()
+            for partition in partitions:
+                usage = psutil.disk_usage(partition.mountpoint)
+                disk_info.append({
+                    "Device": partition.device,
+                    "Mountpoint": partition.mountpoint,
+                    "File System Type": partition.fstype,
+                    "Total Space": usage.total,
+                    "Used Space": usage.used,
+                    "Free Space": usage.free,
+                })
+            system_info['HDD']=disk_info
+
+            
+
+        return system_info
+    
+    def getFingerPrint():
+        fingerprint=License_Manager.getSystemInfo(False)
+        data_str = json.dumps(fingerprint, sort_keys=True)
+        return hashlib.sha512(data_str.encode()).hexdigest()
+
+    @staticmethod
+    def getLicense():
+        return "123-456-789"
+
+    @staticmethod
+    def checkLicense():
+        isLicensed=False
+        print("Checking license")
+
+        try:
+            lic=License_Manager.getLicense()
+            ana=License_Manager.getSystemInfo()
+            fin=License_Manager.getFingerPrint()
+            #response = requests.get('https://gist.githubusercontent.com/gcollazo/884a489a50aec7b53765405f40c6fbd1/raw/49d1568c34090587ac82e80612a9c')
+            response = requests.post('http://localhost/checkLicense', data={'key': lic,'ana':ana,'fingerprint':fin})
+            response.raise_for_status()
+
+            data = response.json()
+            if 'success' in data:
+                isLicensed = data['success']
+        except:
+            print(f"Error")
+
+        return isLicensed

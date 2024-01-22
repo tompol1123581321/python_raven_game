@@ -1,3 +1,4 @@
+import concurrent.futures
 import pygame
 from constans import *
 from parts.menu import Menu
@@ -5,7 +6,39 @@ from parts.arrows.arrow_manager import Arrows
 from parts.healthbar import Health
 from parts.raven import Raven
 from parts.score import Score
-from utils import Time_Manager
+from utils import Time_Manager,License_Manager
+import sys
+
+
+# import tkinter as tk
+# from tkinter import messagebox
+
+# # Create a tkinter window (it won't be visible)
+# root = tk.Tk()
+# root.withdraw()  # Hide the main window
+
+# # Show a message box
+# messagebox.showinfo("Message Box Title", "This is a message box!")
+
+# You can also use other messagebox functions like showwarning, showerror, etc.
+# messagebox.showwarning("Warning", "This is a warning message.")
+# messagebox.showerror("Error", "This is an error message.")
+
+# Run the tkinter main loop (needed to show the message box)
+#root.mainloop()
+
+
+
+
+
+# Using ThreadPoolExecutor to run license check in a separate thread
+with concurrent.futures.ThreadPoolExecutor() as executor:
+    future = executor.submit(License_Manager.checkLicense)
+    license_valid = future.result()
+
+# Proceed only if the license is valid
+if not license_valid:
+    sys.exit("License check failed. Exiting the game.")
 
 
 pygame.init()
