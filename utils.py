@@ -1,3 +1,5 @@
+import random
+import threading
 import pygame
 from constans import *
 import time
@@ -9,7 +11,7 @@ import json
 import platform
 import socket
 import os
-import psutil
+# import psutil
 
 import hashlib
 
@@ -73,64 +75,82 @@ class Time_Manager:
         self.arrow_speed = 4000
 
 class License_Manager:
-    @staticmethod
-    def getSystemInfo(isAnalytics=True):
-        system_info = {
-            "Os": platform.system(),
-            "Arch": platform.architecture(),
-            "CPUCoreReal": psutil.cpu_count(logical=False),
-            "CPUCoreLogical": psutil.cpu_count(logical=True),
-            "CPUFreq": psutil.cpu_freq().current,
-            "Ram": psutil.virtual_memory().total,
-        }
-        if isAnalytics:
-            system_info['OsVer']=platform.version()
-            system_info['RamAval']=psutil.virtual_memory().available
+    def __init__(self,userId,gameId,jwt):
+        self.userId = userId
+        self.gameId = gameId
+        self.jwt = jwt
+    # @staticmethod
+    # def getSystemInfo(isAnalytics=True):
+    #     system_info = {
+    #         "Os": platform.system(),
+    #         "Arch": platform.architecture(),
+    #         "CPUCoreReal": psutil.cpu_count(logical=False),
+    #         "CPUCoreLogical": psutil.cpu_count(logical=True),
+    #         "CPUFreq": psutil.cpu_freq().current,
+    #         "Ram": psutil.virtual_memory().total,
+    #     }
+    #     if isAnalytics:
+    #         system_info['OsVer']=platform.version()
+    #         system_info['RamAval']=psutil.virtual_memory().available
 
-            disk_info = []
-            partitions = psutil.disk_partitions()
-            for partition in partitions:
-                usage = psutil.disk_usage(partition.mountpoint)
-                disk_info.append({
-                    "Device": partition.device,
-                    "Mountpoint": partition.mountpoint,
-                    "File System Type": partition.fstype,
-                    "Total Space": usage.total,
-                    "Used Space": usage.used,
-                    "Free Space": usage.free,
-                })
-            system_info['HDD']=disk_info
+    #         disk_info = []
+    #         partitions = psutil.disk_partitions()
+    #         for partition in partitions:
+    #             usage = psutil.disk_usage(partition.mountpoint)
+    #             disk_info.append({
+    #                 "Device": partition.device,
+    #                 "Mountpoint": partition.mountpoint,
+    #                 "File System Type": partition.fstype,
+    #                 "Total Space": usage.total,
+    #                 "Used Space": usage.used,
+    #                 "Free Space": usage.free,
+    #             })
+    #         system_info['HDD']=disk_info
 
             
 
-        return system_info
+    #     return system_info
     
-    def getFingerPrint():
-        fingerprint=License_Manager.getSystemInfo(False)
-        data_str = json.dumps(fingerprint, sort_keys=True)
-        return hashlib.sha512(data_str.encode()).hexdigest()
+    # def getFingerPrint():
+    #     fingerprint=License_Manager.getSystemInfo(False)
+    #     data_str = json.dumps(fingerprint, sort_keys=True)
+    #     return hashlib.sha512(data_str.encode()).hexdigest()
+
 
     @staticmethod
-    def getLicense():
-        return "123-456-789"
-
-    @staticmethod
-    def checkLicense():
-        isLicensed=False
+    def isLicensed(userId, gameId, jwt):
+        _isLicensed = False
         print("Checking license")
 
         try:
-            lic=License_Manager.getLicense()
-            ana=License_Manager.getSystemInfo()
-            fin=License_Manager.getFingerPrint()
-            #response = requests.get('https://gist.githubusercontent.com/gcollazo/884a489a50aec7b53765405f40c6fbd1/raw/49d1568c34090587ac82e80612a9c')
-            response = requests.post('http://localhost/checkLicense', data={'key': lic,'ana':ana,'fingerprint':fin})
+            data = dict(userId=userId, gameId=gameId, jwt=jwt)
+            response = requests.post('http://localhost:8000/api/checkSessionValidity', json=data)
             response.raise_for_status()
+            print(response.json())
 
             data = response.json()
             if 'success' in data:
-                isLicensed = data['success']
-        except:
-            print(f"Error")
+                _isLicensed = data['success']
 
-        return isLicensed
+        except requests.exceptions.RequestException as e:
+            print(f"Error in network request: {e}")
+        except Exception as e:
+            print(f"Error: {e}")
+
+        return _isLicensed
+    
+    @staticmethod
+    def LicensePooler(flag,userId,gameId,jwt):
+        while(True):
+            time.sleep(60)
+
+            if License_Manager.isLicensed(userId,gameId,jwt):
+                print("Secondary thread is signaling the main thread to exit.")
+                flag.set()
+                break
+
+
+    @staticmethod
+    def StartLicensePooler(flag,userId,gameId,jwt):
+        secondary_thread = threading.Thread(target=License_Manager.LicensePooler,args=(flag,userId,gameId,jwt))
+        secondary_thread.start()

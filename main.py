@@ -1,4 +1,5 @@
 import concurrent.futures
+import threading
 import pygame
 from constans import *
 from parts.menu import Menu
@@ -8,38 +9,40 @@ from parts.raven import Raven
 from parts.score import Score
 from utils import Time_Manager,License_Manager
 import sys
+import argparse
 
 
-# import tkinter as tk
-# from tkinter import messagebox
 
-# # Create a tkinter window (it won't be visible)
-# root = tk.Tk()
-# root.withdraw()  # Hide the main window
 
-# # Show a message box
-# messagebox.showinfo("Message Box Title", "This is a message box!")
+parser=argparse.ArgumentParser()
+parser.add_argument("--key1")
+parser.add_argument("--key2")
+parser.add_argument("--key3")
 
-# You can also use other messagebox functions like showwarning, showerror, etc.
-# messagebox.showwarning("Warning", "This is a warning message.")
-# messagebox.showerror("Error", "This is an error message.")
-
-# Run the tkinter main loop (needed to show the message box)
-#root.mainloop()
-
+args=parser.parse_args()
+if not args.key1 or not args.key2 or not args.key3:
+        sys.exit("Auth keys were not received.")
 
 
 
 
 # Using ThreadPoolExecutor to run license check in a separate thread
 with concurrent.futures.ThreadPoolExecutor() as executor:
-    future = executor.submit(License_Manager.checkLicense)
-    license_valid = future.result()
+    print("gotten here")
+    future = executor.submit(License_Manager.isLicensed(args.key1,args.key2,args.key3))
+    print("gotten here2")
+
+    for completed_future in concurrent.futures.as_completed([future]):
+           is_license_valid = completed_future.result()
 
 # Proceed only if the license is valid
-if not license_valid:
+if not is_license_valid:
     sys.exit("License check failed. Exiting the game.")
 
+
+exitFlag=threading.Event()
+
+License_Manager.StartLicensePooler(exitFlag,args.key1,args.key2,args.key3)
 
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),)
@@ -74,6 +77,9 @@ time_manager = Time_Manager(
 
 run = True
 while run and menu.run:
+    if exitFlag.is_set():
+        break
+
     screen.fill(BG)
 
     arrows.render_arrows(screen)
