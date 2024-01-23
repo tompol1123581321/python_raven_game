@@ -29,7 +29,7 @@ if not args.key1 or not args.key2 or not args.key3:
 # Using ThreadPoolExecutor to run license check in a separate thread
 with concurrent.futures.ThreadPoolExecutor() as executor:
     print("gotten here")
-    future = executor.submit(License_Manager.isLicensed(args.key1,args.key2,args.key3))
+    future = executor.submit(License_Manager.isLicensed,args.key1,args.key2,args.key3)
     print("gotten here2")
 
     for completed_future in concurrent.futures.as_completed([future]):
