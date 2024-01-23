@@ -3,7 +3,7 @@ from constans import *
 
 from utils import get_image
 
-health_point_image = pygame.image.load("Assets/Health/hearth.png")
+health_point_image = pygame.image.load("/home/tomas/Documents/Projects/School/games/game_manager_app/game_manager_games/65a44be015dc9ffb905ac4b7/python_raven_game/Assets/Health/hearth.png")
 
 
 class Health:

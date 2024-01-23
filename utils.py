@@ -128,9 +128,7 @@ class License_Manager:
             response.raise_for_status()
             print(response.json())
 
-            data = response.json()
-            if 'success' in data:
-                _isLicensed = data['success']
+            _isLicensed =response.json() == response.json()
 
         except requests.exceptions.RequestException as e:
             print(f"Error in network request: {e}")

@@ -2,12 +2,12 @@ import concurrent.futures
 import threading
 import pygame
 from constans import *
+from utils import License_Manager, Time_Manager
 from parts.menu import Menu
 from parts.arrows.arrow_manager import Arrows
 from parts.healthbar import Health
 from parts.raven import Raven
 from parts.score import Score
-from utils import Time_Manager,License_Manager
 import sys
 import argparse
 
@@ -20,8 +20,8 @@ parser.add_argument("--key2")
 parser.add_argument("--key3")
 
 args=parser.parse_args()
-if not args.key1 or not args.key2 or not args.key3:
-        sys.exit("Auth keys were not received.")
+# if not args.key1 or not args.key2 or not args.key3:
+#         sys.exit("Auth keys were not received.")
 
 
 
@@ -34,8 +34,11 @@ with concurrent.futures.ThreadPoolExecutor() as executor:
 
     for completed_future in concurrent.futures.as_completed([future]):
            is_license_valid = completed_future.result()
+           print(is_license_valid)
 
 # Proceed only if the license is valid
+print(is_license_valid)
+           
 if not is_license_valid:
     sys.exit("License check failed. Exiting the game.")
 
