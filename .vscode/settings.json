@@ -1,4 +1,9 @@
 {
-    "editor.defaultFormatter": "ms-python.python",
-    "python.analysis.typeCheckingMode": "off"
+    "editor.defaultFormatter": "ms-python.vscode-pylance",
+    "python.analysis.typeCheckingMode": "basic",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "javascript.format.enable": false,
+    "typescript.format.enable": false,
+    "python.analysis.autoImportCompletions": true
 }

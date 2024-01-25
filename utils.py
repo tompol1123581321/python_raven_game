@@ -75,62 +75,24 @@ class Time_Manager:
         self.arrow_speed = 4000
 
 class License_Manager:
-    def __init__(self,userId,gameId,jwt):
-        self.userId = userId
-        self.gameId = gameId
+    def __init__(self,user_id,game_id,jwt):
+        self.user_id = user_id
+        self.game_id = game_id
         self.jwt = jwt
-    # @staticmethod
-    # def getSystemInfo(isAnalytics=True):
-    #     system_info = {
-    #         "Os": platform.system(),
-    #         "Arch": platform.architecture(),
-    #         "CPUCoreReal": psutil.cpu_count(logical=False),
-    #         "CPUCoreLogical": psutil.cpu_count(logical=True),
-    #         "CPUFreq": psutil.cpu_freq().current,
-    #         "Ram": psutil.virtual_memory().total,
-    #     }
-    #     if isAnalytics:
-    #         system_info['OsVer']=platform.version()
-    #         system_info['RamAval']=psutil.virtual_memory().available
+        self.secret = ""
 
-    #         disk_info = []
-    #         partitions = psutil.disk_partitions()
-    #         for partition in partitions:
-    #             usage = psutil.disk_usage(partition.mountpoint)
-    #             disk_info.append({
-    #                 "Device": partition.device,
-    #                 "Mountpoint": partition.mountpoint,
-    #                 "File System Type": partition.fstype,
-    #                 "Total Space": usage.total,
-    #                 "Used Space": usage.used,
-    #                 "Free Space": usage.free,
-    #             })
-    #         system_info['HDD']=disk_info
-
-            
-
-    #     return system_info
-    
-    # def getFingerPrint():
-    #     fingerprint=License_Manager.getSystemInfo(False)
-    #     data_str = json.dumps(fingerprint, sort_keys=True)
-    #     return hashlib.sha512(data_str.encode()).hexdigest()
-
-
-    @staticmethod
-    def isLicensed(userId, gameId, jwt):
+    def initial_licence_check(self):
         _isLicensed = False
         print("Checking license")
 
         try:
-            data = dict(userId=userId, gameId=gameId, jwt=jwt)
+            data = dict(userId=self.user_id, gameId=self.game_id, jwt=self.jwt)
             response = requests.post('http://localhost:8000/api/checkSessionValidity', json=data)
             response.raise_for_status()
             print(response.json())
+            self.secret = response.json()["secret"]
 
-            data = response.json()
-            if 'success' in data:
-                _isLicensed = data['success']
+            _isLicensed =self.periodic_licence_check()
 
         except requests.exceptions.RequestException as e:
             print(f"Error in network request: {e}")
@@ -138,19 +100,32 @@ class License_Manager:
             print(f"Error: {e}")
 
         return _isLicensed
-    
-    @staticmethod
-    def LicensePooler(flag,userId,gameId,jwt):
-        while(True):
-            time.sleep(60)
 
-            if License_Manager.isLicensed(userId,gameId,jwt):
+    def periodic_licence_check(self):
+        _isLicensed = False
+        print("Checking license")
+
+        try:
+            response = requests.get(f'127.0.0.1:8080/clientValidationCheck/{self.user_id}/{self.game_id}')
+            response.raise_for_status()
+            print(response.json())
+            _isLicensed =response.json() == self.secret
+        except requests.exceptions.RequestException as e:
+            print(f"Error in network request: {e}")
+        except Exception as e:
+            print(f"Error: {e}")
+
+        return _isLicensed
+    
+    def license_pooler(self,flag):
+        while(True):
+            time.sleep(10)
+
+            if self.periodic_licence_check() != True:
                 print("Secondary thread is signaling the main thread to exit.")
                 flag.set()
                 break
 
-
-    @staticmethod
-    def StartLicensePooler(flag,userId,gameId,jwt):
-        secondary_thread = threading.Thread(target=License_Manager.LicensePooler,args=(flag,userId,gameId,jwt))
+    def start_license_pooler(self,flag):
+        secondary_thread = threading.Thread(target=self.license_pooler,args=(flag))
         secondary_thread.start()

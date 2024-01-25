@@ -24,25 +24,26 @@ if not args.key1 or not args.key2 or not args.key3:
         sys.exit("Auth keys were not received.")
 
 
-
+licence_manager = License_Manager(args.key1,args.key2,args.key3)
+is_license_valid = False
 
 # Using ThreadPoolExecutor to run license check in a separate thread
 with concurrent.futures.ThreadPoolExecutor() as executor:
-    print("gotten here")
-    future = executor.submit(License_Manager.isLicensed,args.key1,args.key2,args.key3)
-    print("gotten here2")
+    future = executor.submit(licence_manager.initial_licence_check)
 
     for completed_future in concurrent.futures.as_completed([future]):
            is_license_valid = completed_future.result()
+           print(is_license_valid)
 
 # Proceed only if the license is valid
+           
 if not is_license_valid:
     sys.exit("License check failed. Exiting the game.")
 
 
 exitFlag=threading.Event()
 
-License_Manager.StartLicensePooler(exitFlag,args.key1,args.key2,args.key3)
+licence_manager.start_license_pooler(exitFlag)
 
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),)
