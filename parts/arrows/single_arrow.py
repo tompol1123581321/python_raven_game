@@ -5,7 +5,7 @@ import uuid
 from constans import *
 from utils import check_collision, get_image
 
-sprite_sheet_image = pygame.image.load("Assets/Arrow/Arr123.png")
+sprite_sheet_image = pygame.image.load("/home/tomas/Documents/Projects/School/games/game_manager_app/game_manager_games/65a44be015dc9ffb905ac4b7/python_raven_game/Assets/Arrow/Arr123.png")
 
 
 class Arrow:
