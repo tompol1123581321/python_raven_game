@@ -5,7 +5,7 @@ import uuid
 from constans import *
 from utils import check_collision, get_image
 
-sprite_sheet_image = pygame.image.load("/home/tomas/Documents/Projects/School/games/game_manager_app/game_manager_games/65a44be015dc9ffb905ac4b7/python_raven_game/Assets/Arrow/Arr123.png")
+sprite_sheet_image = pygame.image.load("/Assets/Arrow/Arr123.png")
 
 
 class Arrow:
@@ -23,7 +23,7 @@ class Arrow:
             self.axis_speed, self.current_position)
 
     def get_is_aget_is_arrow_out_of_bound(self):
-        arrow_position: tuple = self.current_position
+        arrow_position: tuple = self.current_position # type: ignore
         return arrow_position[0] > SCREEN_WIDTH + 700 or arrow_position[0] < 0 - 700 or arrow_position[1] > SCREEN_HEIGHT + 700 or arrow_position[1] < 0 - 700
 
     def get_did_arrow_hit(self, raven_position):
